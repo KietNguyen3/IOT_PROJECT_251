@@ -24,6 +24,7 @@ void startSTA()
     else
     {
         WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+        Serial.println("Wifi:" + WIFI_SSID + " connected successfully");
     }
 
     while (WiFi.status() != WL_CONNECTED)

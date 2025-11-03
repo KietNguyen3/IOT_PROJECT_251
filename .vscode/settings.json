@@ -14,6 +14,10 @@
         "format": "cpp",
         "initializer_list": "cpp",
         "span": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "locale": "cpp",
+        "__hash_table": "cpp"
     }
 }

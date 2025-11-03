@@ -1,12 +1,13 @@
 #include "led_blinky.h"
 
-void led_blinky(void *pvParameters){
-    pinMode(LED_GPIO, OUTPUT);
-  
-  while(1) {                        
-    digitalWrite(LED_GPIO, HIGH);  // turn the LED ON
-    vTaskDelay(1000);
-    digitalWrite(LED_GPIO, LOW);  // turn the LED OFF
-    vTaskDelay(1000);
-  }
+//LED_PIN is defined Pin_48 LED_GPIO
+void led_blinky(void* pvParameter){
+    pinMode(LED_BUILTIN, OUTPUT);
+    uint8_t ledState = 0;
+    while(1){
+        ledState = (ledState == 0? 1 : 0);
+        if(ledState == 0) digitalWrite(LED_BUILTIN, LOW);
+        else digitalWrite(LED_BUILTIN, HIGH);
+        vTaskDelay(2000);
+    }
 }
