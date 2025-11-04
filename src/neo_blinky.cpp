@@ -1,21 +1,28 @@
 #include "neo_blinky.h"
 
-
+static uint8_t count = 0;
 
 void neo_blinky(void *pvParameters){
 
-    Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
-    strip.begin();
-    // Set all pixels to off to start
-    strip.clear();
-    strip.show(); 
-
-    static uint8_t count = 0;
+    static Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
+    static bool initialized = false;
+    
+    if(!initialized) {
+        vTaskDelay(100);
+        strip.begin();
+        strip.clear();
+        strip.show();
+        vTaskDelay(100);
+        strip.clear();
+        strip.show();
+        initialized = true;
+    }
 
     while(1) {
+        if(++count > 2) count = 0;
         switch(count){
             case 0:
-                strip.setPixelColor(0, strip.Color(255, 0, 0)); // Set pixel 0 to red
+                strip.setPixelColor(0, strip.Color(255, 165, 0)); // Set pixel 0 to red
                 strip.show(); // Update the strip
                 break;
             case 1:
@@ -27,7 +34,6 @@ void neo_blinky(void *pvParameters){
                 strip.show(); // Update the strip
                 break;
         }
-        if(++count > 2) count = 0;
         // Wait for 500 milliseconds
         vTaskDelay(500);
 

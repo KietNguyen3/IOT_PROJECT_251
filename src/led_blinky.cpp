@@ -2,12 +2,12 @@
 
 //LED_PIN is defined Pin_48 LED_GPIO
 void led_blinky(void* pvParameter){
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(LED_GPIO, OUTPUT);
     uint8_t ledState = 0;
     while(1){
         ledState = (ledState == 0? 1 : 0);
-        if(ledState == 0) digitalWrite(LED_BUILTIN, LOW);
-        else digitalWrite(LED_BUILTIN, HIGH);
+        if(ledState == 0) digitalWrite(LED_GPIO, LOW);
+        else digitalWrite(LED_GPIO, HIGH);
         vTaskDelay(2000);
     }
 }
