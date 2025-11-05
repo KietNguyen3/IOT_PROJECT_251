@@ -50,8 +50,9 @@ DHT dht(DHTPIN, DHTTYPE);
 
 void temp_humi_monitor(void *pvParameters) {
     dht.begin();
-
     while (1) {
+        vTaskDelay(pdMS_TO_TICKS(100));
+        Serial.println("Reading...");
         float temperature = dht.readTemperature();
         float humidity = dht.readHumidity();
 
@@ -65,6 +66,6 @@ void temp_humi_monitor(void *pvParameters) {
             Serial.println("°C");
         }
 
-        vTaskDelay(3000); // delay 5 seconds
+        vTaskDelay(pdMS_TO_TICKS(3000)); 
     }
 }

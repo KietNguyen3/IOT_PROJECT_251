@@ -14,6 +14,9 @@ void startSTA()
     {
         vTaskDelete(NULL);
     }
+    static uint8_t count = 0;
+
+    Serial.printf("Connecting to %s...", &WIFI_SSID);
 
     WiFi.mode(WIFI_STA);
 
@@ -24,13 +27,21 @@ void startSTA()
     else
     {
         WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
-        Serial.println("Wifi:" + WIFI_SSID + " connected successfully");
     }
-
+    
     while (WiFi.status() != WL_CONNECTED)
     {
+        if(++count > 100){
+            Serial.println("\nConnection failed, trying to reconnect in 3 seconds");
+            delay(3000);
+            Serial.printf("Connecting to %s...", &WIFI_SSID);
+            count = 0;
+        }
         vTaskDelay(100 / portTICK_PERIOD_MS);
+        Serial.printf(".");
     }
+    Serial.println("Wifi:" + WIFI_SSID + " connected successfully");
+    isWifiConnected = true;
     //Give a semaphore here
     xSemaphoreGive(xBinarySemaphoreInternet);
 }
@@ -43,5 +54,5 @@ bool Wifi_reconnect()
         return true;
     }
     startSTA();
-    return false;
+    return true;
 }
