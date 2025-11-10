@@ -8,7 +8,6 @@
 #include <ArduinoJson.h>
 #include <ThingsBoard.h>
 
-
 void coreiot_task(void *pvParameters);
 void setup_coreiot();
 
