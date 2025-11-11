@@ -1,18 +1,19 @@
 #include "coreiot.h"
 #include <WiFi.h>
 #include "task_wifi.h"
+#include <time.h>
 // ----------- CONFIGURE THESE! -----------
 const char* coreIOT_Server = "app.coreiot.io";  
-const char* coreIOT_Token = "hsd93mmwaws3kivi7x5y";   // Device Access Token
+const char* coreIOT_Token = "hsd93mmwaws3kivi7x5y";   // Uncomment this when use
 const int   mqttPort = 1883;
 // ------------CONFIGURING USERNAME AND PASSWORD---------
 const char* mqttUsername = "KietNguyen";
 const char* mqttPassword = "Kiet2005";
-// ----------------------------------------
+// ------------GATEWAY CONFIGURATIONS------------
+// const char* gateway_token = "rnjvLa8G164Rc1hdqwNH";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-
 
 void reconnect() {
   // Loop until we're reconnected
@@ -70,7 +71,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     
     if(doc["params"].is<bool>()){
       newState = doc["params"];
-      Serial.print("Boolean value: ");
       Serial.println(newState);
       
       digitalWrite(LED_GPIO, (newState ? HIGH : LOW));
@@ -79,7 +79,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
     else if (doc["params"].is<const char*>()) {
       const char* params = doc["params"];
-      Serial.print("String value: ");
       Serial.println(params);
       
       if (strcmp(params, "true") == 0) {
@@ -128,16 +127,20 @@ void setup_coreiot(){
   client.setCallback(callback);
 
   Serial.println("Connecting to CoreIOT server...");
+
   if(client.connect("ESP32_TEST", coreIOT_Token, "")){
     Serial.println("Connected to CoreIOT Server");
     client.subscribe("v1/devices/me/rpc/request/+");
     Serial.println("Subscribed to v1/devices/me/rpc/request/+");
-  } else {
+  }
+  // else if(client.connect("ESP32_GWTest", gateway_token, "")){
+  //   Serial.println("Connected to CoreIOT gateway");
+  // }
+  else {
     Serial.println("Failed to connect with state: ");
     Serial.println(client.state());
     reconnect();
   }
-
 }
 
 void coreiot_task(void *pvParameters){
@@ -150,6 +153,8 @@ void coreiot_task(void *pvParameters){
             reconnect();
         }
         client.loop();
+        TempHumid receiver;
+        xQueuePeek(TempHumidQueue, &receiver, 100);
 
         // Sample payload, publish to 'v1/devices/me/telemetry'
         // String payload = "{\"temperature\":" + String(glob_temperature) +  ",\"humidity\":" + String(glob_humidity) + "}";
@@ -160,28 +165,40 @@ void coreiot_task(void *pvParameters){
 
         // vTaskDelay(10000);  // Publish every 10 seconds
 
-        //-----FOR SWITCHING LED------//
-        vTaskDelay(100);
+        //------Gateway Connection-------//
+        // sendTelemetry();
+
+        //------Direct connection to device-------//
+        String payload = "{\"temperature\":" + String(receiver.temperature) + ",\"humidity\":" + String(receiver.humidity) + "}";
+        client.publish("v1/devices/me/telemetry", payload.c_str());
+        Serial.println("Published payload: " + payload);
+
+        vTaskDelay(5000);
 
     }
 }
 
-// RPC_Response setLedSwitchState(const RPC_Data &data){
-//     bool newState = data;
-//     Serial.println("LED switching to: ");
-//     Serial.println(newState);
-//     digitalWrite(LED_GPIO, newState);
-//     return RPC_Response("setLedSwitchValue", newState);
-// }
+void sendTelemetry(){
+  StaticJsonDocument<1024> doc;
 
-// RPC_Response getLedSwitchState(const RPC_Data &data){
-//     bool currentState = digitalRead(LED_GPIO);
-//     Serial.println("Reporting LED state: ");
-//     Serial.println(currentState);
-//     return RPC_Response("setLedSwitchValue", currentState);
-// }
+  long ts = (long)(time(nullptr) * 1000);
 
-// const std::array<RPC_Callback, 2U> callbacks = {
-//   RPC_Callback{ "setLedSwitchValue", setLedSwitchState },
-//   RPC_Callback{ "getLedSwitchValue", getLedSwitchState }
-// };
+  TempHumid receiver;
+  xQueuePeek(TempHumidQueue, &receiver, 100);
+
+  JsonArray arr1 = doc.createNestedArray("ESP32_S3");
+  JsonObject item1 = doc.createNestedObject();
+  item1["ts"] = ts;
+  JsonObject value1 = doc.createNestedObject("values");
+  value1["temperature"] = receiver.temperature;
+  value1["humidity"] = receiver.humidity;
+
+  String payload;
+  serializeJson(doc, payload);
+
+  client.publish("v1/gateway/telemetry", payload.c_str());
+
+  Serial.println("Published Json: ");
+  Serial.println(payload);
+
+}

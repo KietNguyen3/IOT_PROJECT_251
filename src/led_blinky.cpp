@@ -6,20 +6,22 @@ void led_blinky(void* pvParameter){
     uint8_t ledState = 0;
     vTaskDelay(500);
     while(1){
+        TempHumid receiver;
+        xQueuePeek(TempHumidQueue, &receiver, 100);
         ledState = (ledState == 0? 1 : 0);
         if(ledState == 0) digitalWrite(LED_GPIO, LOW);
         else digitalWrite(LED_GPIO, HIGH);
-        if(glob_temperature == 0){
+        if(receiver.temperature == 0){
             vTaskDelay(1000);
-        } 
-        else if(glob_temperature > 25){
+        }
+        else if(receiver.temperature > 25){
             vTaskDelay(200);
-        } 
-        else if(glob_temperature > 20){
+        }
+        else if(receiver.temperature > 20){
             vTaskDelay(500);
-        } 
-        else if(glob_temperature > 15){
+        }
+        else if(receiver.temperature > 15){
             vTaskDelay(1000);
-        } 
+        }
     }
 }

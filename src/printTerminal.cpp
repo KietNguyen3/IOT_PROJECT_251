@@ -4,10 +4,14 @@ SemaphoreHandle_t printTempHumidSemaphore = xSemaphoreCreateBinary();
 
 void printTH(void* pvParameters){
     while(1){    
+        TempHumid receiver;
+        xQueuePeek(TempHumidQueue, &receiver, 100);
+
+        if(receiver.temperature == 0) continue;
         Serial.print("Temperature: ");
-        Serial.print(glob_temperature);
+        Serial.print(receiver.temperature);
         Serial.print("°C Humidity: ");
-        Serial.print(glob_humidity);
+        Serial.print(receiver.humidity);
         Serial.println("% ");
 
         xSemaphoreGive(printTempHumidSemaphore);
@@ -21,16 +25,19 @@ void printCondition(void* pvParameters){
             if(xSemaphoreTake(printTempHumidSemaphore, portMAX_DELAY))
                 break;
         }
-        if(glob_temperature == 0){
+        TempHumid receiver;
+        xQueuePeek(TempHumidQueue, &receiver, 100);
+
+        if(receiver.temperature == 0){
                 Serial.println("Temperature initializing...");
-        } 
-        else if(glob_temperature > 25){
+        }
+        else if(receiver.temperature > 25){
                 Serial.println("Satisfactory Temperature");
         } 
-        else if(glob_temperature > 20){
+        else if(receiver.temperature > 20){
                 Serial.println("Cool Temperature");
         } 
-        else if(glob_temperature > 15){
+        else if(receiver.temperature > 15){
                 Serial.println("Freezing Temperature");
         }
     }

@@ -1,10 +1,14 @@
 #include "temp_humi_monitor.h"
+#include "printLCD.h"
 // #define DHTPIN 2
 // #define DHTTYPE DHT11
 
 DHT20 dht20;
 // DHT dht(DHTPIN, DHTTYPE);
-//LiquidCrystal_I2C lcd(33,16,2);
+
+SemaphoreHandle_t printOnLCDSemaphore = xSemaphoreCreateBinary();
+
+LiquidCrystal_I2C lcd(0x21,16,2);
 #define SCL_Pin  9
 #define SDA_Pin  8
 
@@ -14,31 +18,29 @@ void temp_humi_monitor(void *pvParameters){
     Wire.begin(SDA_Pin, SCL_Pin);
     dht20.begin();
 
+    lcd.begin();
+
     while (1){
         /* code */
         
         dht20.read();
-        // Reading temperature in Celsius
-        float temperature = dht20.getTemperature();
-        // Reading humidity
-        float humidity = dht20.getHumidity();
-
-        
+        TempHumid th = {dht20.getTemperature(), dht20.getHumidity()};
+        xQueueOverwrite(TempHumidQueue, &th);
 
         // Check if any reads failed and exit early
-        if (isnan(temperature) || isnan(humidity)) {
-            Serial.println("Failed to read from DHT sensor!");
-            temperature = humidity =  -1;
-            return;
+        if (isnan(th.temperature) || isnan(th.humidity)) {
+            Serial.println("Failed to read from DHT sensor! Retrying");
+            delay(1000);
+            continue;
         }
 
         //Update global variables for temperature and humidity
-        glob_temperature = temperature;
-        glob_humidity = humidity;
 
         // Print the results
-        
-        vTaskDelay(5000);
+        xSemaphoreGive(printOnLCDSemaphore);
+        reportTempAndHumidity(lcd);
+
+        vTaskDelay(3000);
     }
     
 }

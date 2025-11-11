@@ -22,13 +22,13 @@ void setup()
   Serial.begin(115200);
   Serial.println("Booted successfully");
   //startSTA();
-  //pinMode(LED_GPIO, OUTPUT);
+  // pinMode(LED_GPIO, OUTPUT);
   //check_info_File(0);
 
 
   xTaskCreate(led_blinky, "Task LED Blink", 2048, NULL, 1, NULL);
   xTaskCreate(printCondition, "Print Condition", 2048, NULL, 1, NULL);
-  //xTaskCreate(neo_blinky, "Task NEO Blink", 2048, NULL, 1, NULL);
+  xTaskCreatePinnedToCore(neo_blinky, "Task NEO Blink", 2048, NULL, 1, NULL, 1);
   xTaskCreate(temp_humi_monitor, "Task TEMP HUMI Monitor", 8192, NULL, 2, NULL);
   xTaskCreate(printTH, "Print Temp and Humidity", 2048, NULL, 1, NULL);
   // xTaskCreate(main_server_task, "Task Main Server" ,8192  ,NULL  ,2 , NULL);

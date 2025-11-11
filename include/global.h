@@ -9,8 +9,12 @@
 
 #define LED_GPIO 48
 
-extern float glob_temperature;
-extern float glob_humidity;
+struct TempHumid{
+    float temperature;
+    float humidity;
+};
+
+extern QueueHandle_t TempHumidQueue;
 
 extern String WIFI_SSID;
 extern String WIFI_PASS;

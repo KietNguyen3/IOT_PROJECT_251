@@ -4,8 +4,6 @@
 #include "global.h"
 #include <cmath>
 
-extern float glob_temperature;
-extern float glob_humidity;
 extern SemaphoreHandle_t printTempHumidSemaphore;
 
 void printTH(void* pvParameters);
