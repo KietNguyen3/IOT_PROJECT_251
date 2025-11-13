@@ -7,4 +7,9 @@
 extern SemaphoreHandle_t printOnLCDSemaphore;
 void reportTempAndHumidity(LiquidCrystal_I2C &lcd);
 
+extern bool button_flag;
+extern bool lastState;
+extern bool currentState;
+extern LiquidCrystal_I2C lcd;
+
 #endif

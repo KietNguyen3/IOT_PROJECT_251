@@ -40,7 +40,7 @@ void temp_humi_monitor(void *pvParameters){
         xSemaphoreGive(printOnLCDSemaphore);
         reportTempAndHumidity(lcd);
 
-        vTaskDelay(3000);
+        vTaskDelay(1000);
     }
     
 }

@@ -15,3 +15,4 @@ String wifi_password = "88888888";
 boolean isWifiConnected = false;
 
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();
+

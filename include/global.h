@@ -5,9 +5,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
-
+#include "LiquidCrystal_I2C.h"
 
 #define LED_GPIO 48
+#define SENSOR_PIN 4
 
 struct TempHumid{
     float temperature;
@@ -15,6 +16,7 @@ struct TempHumid{
 };
 
 extern QueueHandle_t TempHumidQueue;
+extern LiquidCrystal_I2C lcd;
 
 extern String WIFI_SSID;
 extern String WIFI_PASS;

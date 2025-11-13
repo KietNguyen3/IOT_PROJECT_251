@@ -1,7 +1,7 @@
 #include "neo_blinky.h"
 
 void neo_blinky(void *pvParameters) {
-    Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
+    static Adafruit_NeoPixel strip(LED_COUNT, NEO_PIN, NEO_GRB + NEO_KHZ800);
     strip.begin();
     strip.clear();
     strip.show();
