@@ -43,7 +43,7 @@ void reportTempAndHumidity(LiquidCrystal_I2C &lcd){
             lcd.setCursor(0,0);
             lcd.print("Mid Temperature");
         }
-        else if(receiver.temperature > 20){
+        else{
             lcd.setCursor(0,0);
             lcd.print("Low Temperature");
         }
@@ -64,6 +64,12 @@ void reportTempAndHumidity(LiquidCrystal_I2C &lcd){
             lcd.print("               ");
             lcd.setCursor(0,1);
             lcd.print("Average Humidity");
+        }
+        else{
+            lcd.setCursor(0,1);
+            lcd.print("               ");
+            lcd.setCursor(0,1);
+            lcd.print("Low Humidity");
         }
     }
 

@@ -4,13 +4,15 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include "global.h"
+#include "task_wifi.h"
 
-#define LED1_PIN 48
-#define LED2_PIN 41
+#define BLUE_LED 6
+#define GREEN_LED 7
 #define BOOT_PIN 0
-//extern WebServer server;
 
-//extern bool isAPMode;
+extern WebServer server;
+
+extern bool isAPMode;
 
 
 
@@ -20,7 +22,6 @@ String settingsPage();
 
 void startAP();
 void setupServer();
-void connectToWiFi();
 
 void main_server_task(void *pvParameters);
 

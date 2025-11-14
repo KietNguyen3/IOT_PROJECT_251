@@ -40,6 +40,7 @@ void startSTA()
         vTaskDelay(100 / portTICK_PERIOD_MS);
         Serial.printf(".");
     }
+    Serial.println("");
     Serial.println("Wifi:" + WIFI_SSID + " connected successfully");
     isWifiConnected = true;
     //Give a semaphore here
@@ -54,5 +55,6 @@ bool Wifi_reconnect()
         return true;
     }
     startSTA();
+    Serial.println("\nReconnected successfully");
     return true;
 }
