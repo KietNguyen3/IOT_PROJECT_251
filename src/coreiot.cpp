@@ -188,7 +188,7 @@ void sendTelemetry(){
   TempHumid receiver;
   xQueuePeek(TempHumidQueue, &receiver, 100);
 
-  JsonArray arr1 = doc.createNestedArray("ESP32_S3");
+  JsonArray arr1 = doc.createNestedArray("ESP32_GWTest");
   JsonObject item1 = doc.createNestedObject();
   item1["ts"] = ts;
   JsonObject value1 = doc.createNestedObject("values");

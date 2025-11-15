@@ -2,7 +2,6 @@
 #define __PRINT_H__
 
 #include "global.h"
-#include <cmath>
 
 extern SemaphoreHandle_t printTempHumidSemaphore;
 

@@ -46,7 +46,6 @@ void setupTinyML()
 
 void tiny_ml_task(void *pvParameters)
 {
-
     setupTinyML();
     TempHumid th;
     

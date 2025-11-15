@@ -6,9 +6,9 @@
 DHT20 dht20;
 // DHT dht(DHTPIN, DHTTYPE);
 
-SemaphoreHandle_t printOnLCDSemaphore = xSemaphoreCreateBinary();
+SemaphoreHandle_t xTempHumidSemaphore = xSemaphoreCreateBinary();
 
-LiquidCrystal_I2C lcd(0x21,16,2);
+
 #define SCL_Pin  9
 #define SDA_Pin  8
 
@@ -17,8 +17,6 @@ void temp_humi_monitor(void *pvParameters){
 
     Wire.begin(SDA_Pin, SCL_Pin);
     dht20.begin();
-
-    lcd.begin();
 
     while (1){
         /* code */
@@ -37,10 +35,9 @@ void temp_humi_monitor(void *pvParameters){
         //Update global variables for temperature and humidity
 
         // Print the results
-        xSemaphoreGive(printOnLCDSemaphore);
-        reportTempAndHumidity(lcd);
+        xSemaphoreGive(xTempHumidSemaphore);
 
-        vTaskDelay(1000);
+        vTaskDelay(2000);
     }
     
 }

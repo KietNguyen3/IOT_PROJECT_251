@@ -3,13 +3,16 @@
 
 #include "global.h"
 #include "LiquidCrystal_I2C.h"
+#include "waterSensor.h"
+#include "temp_humi_monitor.h"
 
-extern SemaphoreHandle_t printOnLCDSemaphore;
-void reportTempAndHumidity(LiquidCrystal_I2C &lcd);
+extern SemaphoreHandle_t PrintOnLCDSemaphore;
+void reportTempAndHumidity(void* pvParameters);
+void reportWaterAmount(void* pvParameters);
+void switchLCD(void* pvParameters);
 
-extern bool button_flag;
-extern bool lastState;
-extern bool currentState;
 extern LiquidCrystal_I2C lcd;
+extern TaskHandle_t waterTaskHandle;
+extern TaskHandle_t tempHumidTaskHandle;
 
 #endif
