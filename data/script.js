@@ -1,66 +1,83 @@
 // ==================== WEBSOCKET ====================
-var gateway = `ws://${window.location.hostname}/ws`;
-var websocket;
 
-window.addEventListener('load', onLoad);
+// Dùng host (có cả port) để WebSocket luôn đúng với port 8080
+var gateway = `ws://${window.location.host}/ws`;
+var websocket = null;
 
-function onLoad(event) {
+window.addEventListener('load', function () {
     initWebSocket();
-}
-
-function onOpen(event) {
-    console.log('Connection opened');
-}
-
-function onClose(event) {
-    console.log('Connection closed');
-    setTimeout(initWebSocket, 2000);
-}
+    initGauges();
+    loadCoreIOTConfig();
+    pollSensors();
+});
 
 function initWebSocket() {
-    console.log('Trying to open a WebSocket connection…');
+    console.log('🔌 Mở kết nối WebSocket...');
     websocket = new WebSocket(gateway);
     websocket.onopen = onOpen;
     websocket.onclose = onClose;
     websocket.onmessage = onMessage;
 }
 
-function Send_Data(data) {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-        websocket.send(data);
-        console.log("📤 Gửi:", data);
-    } else {
-        console.warn("⚠️ WebSocket chưa sẵn sàng!");
-        alert("⚠️ WebSocket chưa kết nối!");
-    }
+function onOpen(event) {
+    console.log('✅ WebSocket đã kết nối');
+}
+
+function onClose(event) {
+    console.log('⚠️ WebSocket đóng, thử lại sau 2 giây...');
+    setTimeout(initWebSocket, 2000);
 }
 
 function onMessage(event) {
     console.log("📩 Nhận:", event.data);
     try {
         var data = JSON.parse(event.data);
-        // Có thể thêm xử lý riêng nếu cần (ví dụ cập nhật trạng thái)
+        // Cập nhật gauge nếu có dữ liệu
+        if (data.temp !== undefined && window.gaugeTemp) {
+            window.gaugeTemp.refresh(data.temp);
+        }
+        if (data.humi !== undefined && window.gaugeHumi) {
+            window.gaugeHumi.refresh(data.humi);
+        }
     } catch (e) {
-        console.warn("Không phải JSON hợp lệ:", event.data);
+        console.warn("⚠️ Dữ liệu nhận được không phải JSON hợp lệ:", event.data);
     }
 }
 
+function Send_Data(data) {
+    if (websocket && websocket.readyState === WebSocket.OPEN) {
+        var payload = (typeof data === "string") ? data : JSON.stringify(data);
+        websocket.send(payload);
+        console.log("📤 Gửi:", payload);
+    } else {
+        console.warn("⚠️ WebSocket chưa sẵn sàng, không thể gửi dữ liệu!");
+    }
+}
 
 // ==================== UI NAVIGATION ====================
 let relayList = [];
 let deleteTarget = null;
 
 function showSection(id, event) {
+    // Ẩn tất cả sections
     document.querySelectorAll('.section').forEach(sec => sec.style.display = 'none');
-    document.getElementById(id).style.display = id === 'settings' ? 'flex' : 'block';
+
+    // Hiện section được chọn
+    document.getElementById(id).style.display = (id === 'settings') ? 'flex' : 'block';
+
+    // Active menu
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     event.currentTarget.classList.add('active');
+
+    // Tải lại cấu hình khi mở phần Settings
+    if (id === 'settings') {
+        loadCoreIOTConfig();
+    }
 }
 
-
 // ==================== HOME GAUGES ====================
-window.onload = function () {
-    const gaugeTemp = new JustGage({
+function initGauges() {
+    window.gaugeTemp = new JustGage({
         id: "gauge_temp",
         value: 26,
         min: -10,
@@ -73,7 +90,7 @@ window.onload = function () {
         levelColors: ["#00BCD4", "#4CAF50", "#FFC107", "#F44336"]
     });
 
-    const gaugeHumi = new JustGage({
+    window.gaugeHumi = new JustGage({
         id: "gauge_humi",
         value: 60,
         min: 0,
@@ -85,52 +102,57 @@ window.onload = function () {
         levelColorsGradient: true,
         levelColors: ["#42A5F5", "#00BCD4", "#0288D1"]
     });
-
-    setInterval(() => {
-        gaugeTemp.refresh(Math.floor(Math.random() * 15) + 20);
-        gaugeHumi.refresh(Math.floor(Math.random() * 40) + 40);
-    }, 3000);
-};
-
+}
 
 // ==================== DEVICE FUNCTIONS ====================
 function openAddRelayDialog() {
     document.getElementById('addRelayDialog').style.display = 'flex';
 }
+
 function closeAddRelayDialog() {
     document.getElementById('addRelayDialog').style.display = 'none';
 }
+
 function saveRelay() {
     const name = document.getElementById('relayName').value.trim();
     const gpio = document.getElementById('relayGPIO').value.trim();
-    if (!name || !gpio) return alert("⚠️ Please fill all fields!");
+
+    if (!name || !gpio) {
+        alert("⚠️ Vui lòng điền đầy đủ tên và GPIO!");
+        return;
+    }
+
     relayList.push({ id: Date.now(), name, gpio, state: false });
     renderRelays();
     closeAddRelayDialog();
 }
+
 function renderRelays() {
     const container = document.getElementById('relayContainer');
     container.innerHTML = "";
+
     relayList.forEach(r => {
         const card = document.createElement('div');
         card.className = 'device-card';
         card.innerHTML = `
-      <i class="fa-solid fa-bolt device-icon"></i>
-      <h3>${r.name}</h3>
-      <p>GPIO: ${r.gpio}</p>
-      <button class="toggle-btn ${r.state ? 'on' : ''}" onclick="toggleRelay(${r.id})">
-        ${r.state ? 'ON' : 'OFF'}
-      </button>
-      <i class="fa-solid fa-trash delete-icon" onclick="showDeleteDialog(${r.id})"></i>
-    `;
+            <i class="fa-solid fa-bolt device-icon"></i>
+            <h3>${r.name}</h3>
+            <p>GPIO: ${r.gpio}</p>
+            <button class="toggle-btn ${r.state ? 'on' : ''}" onclick="toggleRelay(${r.id})">
+                ${r.state ? 'ON' : 'OFF'}
+            </button>
+            <i class="fa-solid fa-trash delete-icon" onclick="showDeleteDialog(${r.id})"></i>
+        `;
         container.appendChild(card);
     });
 }
+
 function toggleRelay(id) {
     const relay = relayList.find(r => r.id === id);
     if (relay) {
         relay.state = !relay.state;
-        const relayJSON = JSON.stringify({
+
+        Send_Data({
             page: "device",
             value: {
                 name: relay.name,
@@ -138,45 +160,118 @@ function toggleRelay(id) {
                 gpio: relay.gpio
             }
         });
-        Send_Data(relayJSON);
+
         renderRelays();
     }
 }
+
 function showDeleteDialog(id) {
     deleteTarget = id;
     document.getElementById('confirmDeleteDialog').style.display = 'flex';
 }
+
 function closeConfirmDelete() {
     document.getElementById('confirmDeleteDialog').style.display = 'none';
 }
+
 function confirmDelete() {
     relayList = relayList.filter(r => r.id !== deleteTarget);
     renderRelays();
     closeConfirmDelete();
 }
 
+// ==================== COREIOT CONFIG API ====================
+async function loadCoreIOTConfig() {
+    try {
+        const response = await fetch('/api/coreiot/config');
+        if (!response.ok) {
+            console.warn("⚠️ Không tải được cấu hình CoreIOT!");
+            return;
+        }
 
-// ==================== SETTINGS FORM (BỔ SUNG) ====================
-document.getElementById("settingsForm").addEventListener("submit", function (e) {
+        const data = await response.json();
+
+        if (data.server)    document.getElementById('server').value = data.server;
+        if (data.port)      document.getElementById('port').value = data.port;
+        if (data.client_id) document.getElementById('client_id').value = data.client_id;
+        if (data.username)  document.getElementById('mqtt_username').value = data.username;
+
+        const mqttPassInput = document.getElementById('mqtt_password');
+        mqttPassInput.value = "";
+        mqttPassInput.placeholder = data.password_set
+            ? "Mật khẩu đã lưu (để trống = giữ nguyên)"
+            : "Password (MQTT)";
+
+        console.log("✅ Đã tải cấu hình CoreIOT");
+    } catch (error) {
+        console.error("❌ Lỗi tải cấu hình:", error);
+    }
+}
+
+document.getElementById("settingsForm").addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    const ssid = document.getElementById("ssid").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const token = document.getElementById("token").value.trim();
-    const server = document.getElementById("server").value.trim();
-    const port = document.getElementById("port").value.trim();
+    const server        = document.getElementById("server").value.trim();
+    const portValue     = document.getElementById("port").value.trim();
+    const client_id     = document.getElementById("client_id").value.trim();
+    const mqtt_username = document.getElementById("mqtt_username").value.trim();
+    const mqtt_password = document.getElementById("mqtt_password").value.trim();
 
-    const settingsJSON = JSON.stringify({
-        page: "setting",
-        value: {
-            ssid: ssid,
-            password: password,
-            token: token,
-            server: server,
-            port: port
+    const port = parseInt(portValue, 10);
+    if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+        alert("⚠️ Port không hợp lệ! (1–65535)");
+        return;
+    }
+
+    if (!server || !client_id || !mqtt_username) {
+        alert("⚠️ Vui lòng điền đủ: Server, Client ID và Username!");
+        return;
+    }
+
+    const config = {
+        server    : server,
+        port      : port,
+        client_id : client_id,
+        username  : mqtt_username,
+        password  : mqtt_password || "***"
+    };
+
+    try {
+        const response = await fetch('/api/coreiot/config', {
+            method : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body   : JSON.stringify(config)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert("✅ Đã lưu cấu hình! MQTT sẽ kết nối lại.");
+            setTimeout(loadCoreIOTConfig, 500);
+        } else {
+            alert("❌ Lỗi: " + (result.message || "Không rõ nguyên nhân"));
         }
-    });
-
-    Send_Data(settingsJSON);
-    alert("✅ Cấu hình đã được gửi đến thiết bị!");
+    } catch (error) {
+        console.error("❌ Lỗi gửi cấu hình:", error);
+        alert("❌ Không thể kết nối đến ESP32!");
+    }
 });
+
+// ==================== SENSOR POLLING ====================
+async function pollSensors() {
+    try {
+        const res = await fetch('/sensor');
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data.error) return;
+
+        if (window.gaugeTemp) window.gaugeTemp.refresh(data.temperature ?? 0);
+        if (window.gaugeHumi) window.gaugeHumi.refresh(data.humidity ?? 0);
+
+    } catch (err) {
+        console.warn('⚠️ Lỗi tải dữ liệu cảm biến', err);
+    }
+}
+
+setInterval(pollSensors, 5000);

@@ -1,6 +1,7 @@
 #include "fanControl.h"
 
 int lastSpeed = 0;
+QueueHandle_t fanSpeedQueue = xQueueCreate(1, sizeof(int));
 
 void fanDrive(void* pvParameters){
     TempHumid th;
@@ -27,6 +28,7 @@ void fanDrive(void* pvParameters){
                 vTaskDelay(10);
             }
         }
+        xQueueOverwrite(fanSpeedQueue, &cap);
         lastSpeed = cap;
         vTaskDelay(500);
     }

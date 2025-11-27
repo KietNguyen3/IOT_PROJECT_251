@@ -1,0 +1,7 @@
+{
+  "server": "app.coreiot.io",
+  "port": 1883,
+  "client_id": "ESP32_S3",
+  "username": "KietNguyen",
+  "password": "87654321"
+}

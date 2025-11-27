@@ -1,14 +1,14 @@
-#ifndef __TASK_WIFI_H__
-#define __TASK_WIFI_H__
+#ifndef TASK_WIFI_H
+#define TASK_WIFI_H
 
 #include <WiFi.h>
-#include <ThingsBoard.h>
-#include "global.h"
+#include <task_check_info.h>
+#include <task_webserver.h>
 
+// Keep if used across files
+bool Wifi_reconnect();
 
-
-extern bool Wifi_reconnect();
-extern void startAP();
-extern void startSTA();
+// Return true if STA connects; stopAP=true will turn off softAP on success
+bool startSTA(bool stopAP = true);
 
 #endif
