@@ -5,7 +5,7 @@
 
 #define SIG_PIN 13
 const int pwmPin = 13;
-const int pwmChannel = 0;
+const int pwmChannel = 2;
 const int pwmFreq = 25000;
 const int pwmResolution = 8;
 
