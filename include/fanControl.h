@@ -10,6 +10,7 @@ const int pwmFreq = 25000;
 const int pwmResolution = 8;
 
 extern int lastSpeed;
+extern QueueHandle_t fanSpeedQueue;
 
 void fanDrive(void* pvParameters);
 

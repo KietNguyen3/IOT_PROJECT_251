@@ -1,16 +1,19 @@
-#ifndef __COREIOT_H__
-#define __COREIOT_H__
+#ifndef COREIOT_H
+#define COREIOT_H
 
 #include <Arduino.h>
-#include "task_wifi.h"
-#include "global.h"
 #include <PubSubClient.h>
-#include <ArduinoJson.h>
-#include <ThingsBoard.h>
 
+// ✅ Các hàm cơ bản
+void coreiot_loop();
+bool mqttReconnect();
+void publishData(String json);
+void mqttCallback(char* topic, byte* payload, unsigned int length);
 
-void coreiot_task(void *pvParameters);
-void setup_coreiot();
-void sendTelemetry();
+// ✅ Hàm kiểm tra trạng thái
+bool isMQTTConnected();
+
+// ✅ THÊM: Hàm reconnect cho main loop (wrapper)
+void CORE_IOT_reconnect();
 
 #endif

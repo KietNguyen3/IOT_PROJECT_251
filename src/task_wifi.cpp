@@ -1,60 +1,84 @@
 #include "task_wifi.h"
 
-void startAP()
+bool startSTA(bool stopAP)
 {
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(String(SSID_AP), String(PASS_AP));
-    Serial.print("AP IP: ");
-    Serial.println(WiFi.softAPIP());
-}
-
-void startSTA()
-{
-    if (WIFI_SSID.isEmpty())
-    {
-        vTaskDelete(NULL);
+    if (WIFI_SSID.isEmpty()) {
+        Serial.println("⚠️ WIFI_SSID empty, cannot connect");
+        return false;
     }
-    static uint8_t count = 0;
 
-    Serial.printf("Connecting to %s...", &WIFI_SSID);
-
-    WiFi.mode(WIFI_STA);
-
-    if (WIFI_PASS.isEmpty())
-    {
-        WiFi.begin(WIFI_SSID.c_str());
-    }
-    else
-    {
-        WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
-    }
+    Serial.println("\n======== CONNECTING WIFI ========");
+    Serial.println("SSID: " + WIFI_SSID);
     
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        if(++count > 100){
-            Serial.println("\nConnection failed, trying to reconnect in 3 seconds");
-            delay(3000);
-            Serial.printf("Connecting to %s...", &WIFI_SSID);
-            count = 0;
-        }
+    // ✅ DON'T change mode - keep AP+STA
+    // WiFi.mode(WIFI_STA);  // REMOVED
+    
+    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+
+    int timeout = 0;
+    while (WiFi.status() != WL_CONNECTED && timeout < 200) {
         vTaskDelay(100 / portTICK_PERIOD_MS);
-        Serial.printf(".");
+        if (timeout % 10 == 0) Serial.print(".");
+        timeout++;
     }
-    Serial.println("");
-    Serial.println("Wifi:" + WIFI_SSID + " connected successfully");
-    isWifiConnected = true;
-    //Give a semaphore here
-    xSemaphoreGive(xBinarySemaphoreInternet);
+    Serial.println();
+
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("✅ WiFi Connected!");
+        Serial.println("IP: " + WiFi.localIP().toString());
+        
+        if (stopAP) {
+            Serial.println("ℹ️ Turning off AP...");
+            WiFi.softAPdisconnect(true);
+            WiFi.mode(WIFI_STA);
+            Serial.println("✅ AP stopped, STA only");
+        }
+        
+        if (xBinarySemaphoreInternet != NULL) {
+            xSemaphoreGive(xBinarySemaphoreInternet);
+        }
+        return true;
+    } else {
+        Serial.println("❌ WiFi connection failed (20s timeout)");
+        return false;
+    }
+    Serial.println("=================================\n");
+    return false;
 }
 
 bool Wifi_reconnect()
 {
-    const wl_status_t status = WiFi.status();
-    if (status == WL_CONNECTED)
-    {
+    if (WiFi.status() == WL_CONNECTED) {
         return true;
     }
-    startSTA();
-    Serial.println("\nReconnected successfully");
-    return true;
+    
+    if (WIFI_SSID.isEmpty()) {
+        return false;
+    }
+    
+    Serial.println("📡 WiFi reconnecting...");
+    
+    // ✅ Just disconnect STA, don't touch AP
+    WiFi.disconnect(false);  // false = don't turn off WiFi
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    
+    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
+    
+    int timeout = 0;
+    while (WiFi.status() != WL_CONNECTED && timeout < 150) {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        timeout++;
+    }
+    
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("✅ WiFi reconnected: " + WiFi.localIP().toString());
+        
+        if (xBinarySemaphoreInternet != NULL) {
+            xSemaphoreGive(xBinarySemaphoreInternet);
+        }
+        return true;
+    }
+    
+    Serial.println("❌ WiFi reconnect failed");
+    return false;
 }
