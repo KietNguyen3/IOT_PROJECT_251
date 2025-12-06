@@ -63,27 +63,27 @@ void neo_blinky(void *pvParameters) {
             // Map humidity to brightness levels (0-255)
             if (receiver.humidity > 90) {
                 brightness = 255;  // Maximum brightness - Critical humidity
-                Serial.println("HUMIDITY: >90% - Maximum brightness");
+                //Serial.println("HUMIDITY: >90% - Maximum brightness");
             }
             else if (receiver.humidity > 80) {
                 brightness = 200;  // Very high
-                Serial.println("HUMIDITY: 80-90% - Very high brightness");
+                //Serial.println("HUMIDITY: 80-90% - Very high brightness");
             }
             else if (receiver.humidity > 70) {
                 brightness = 150;  // High
-                Serial.println("HUMIDITY: 70-80% - High brightness");
+                //Serial.println("HUMIDITY: 70-80% - High brightness");
             }
             else if (receiver.humidity > 60) {
                 brightness = 100;  // Medium
-                Serial.println("HUMIDITY: 60-70% - Medium brightness");
+                //Serial.println("HUMIDITY: 60-70% - Medium brightness");
             }
             else if (receiver.humidity > 50) {
                 brightness = 50;   // Low
-                Serial.println("HUMIDITY: 50-60% - Low brightness");
+                //Serial.println("HUMIDITY: 50-60% - Low brightness");
             }
             else {
                 brightness = 10;   // Very dim - Low humidity
-                Serial.println("HUMIDITY: <50% - Very low brightness");
+                //Serial.println("HUMIDITY: <50% - Very low brightness");
             }
             
             // Apply brightness to base color using PWM-like scaling

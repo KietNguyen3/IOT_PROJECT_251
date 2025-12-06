@@ -22,9 +22,10 @@ void task_mqtt(void *pv) {
         // ✅ Changed: Use 0 timeout instead of portMAX_DELAY to avoid blocking
         bool hasTempHumid = (TempHumidQueue != NULL && xQueuePeek(TempHumidQueue, &th, 0) == pdTRUE);
         bool hasWater = (waterValueQueue != NULL && xQueuePeek(waterValueQueue, &water, 0) == pdTRUE);
-
+#ifdef DEBUG
         Serial.println(hasTempHumid);
         Serial.println(hasWater);
+#endif
         
         if (hasTempHumid && hasWater) {
 #ifdef DEBUG

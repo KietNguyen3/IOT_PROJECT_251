@@ -9,6 +9,8 @@
 #include "task_check_info.h"
 #include "mainserver.h"
 
+#include <ArduinoJson.h>
+
 // ==================== LED CONFIG ====================
 static const uint8_t LED1_CHANNEL = 0;
 static const uint8_t LED2_CHANNEL = 1;
@@ -25,8 +27,8 @@ LEDState led1 = {false, 50, 127};
 LEDState led2 = {false, 50, 127};
 
 // ==================== EXTERN VARIABLES ====================
-String wifi_ssid;
-String wifi_password;
+extern String wifi_ssid;
+extern String wifi_password;
 // ==================== GLOBAL VARIABLES ====================
 WebServer server(80);
 bool isAPMode = false;
@@ -52,7 +54,7 @@ void setupPWM() {
   ledcAttachPin(LED2_PIN, LED2_CHANNEL);
   ledcWrite(LED2_CHANNEL, 0);
 
-  Serial.println("[PWM] Initialized (LED1:GPIO48 NeoPixel, LED2:GPIO41 PWM)");
+ Serial.println("[PWM] Initialized (LED1:GPIO16, LED2:GPIO17 PWM)");
 }
 
 void setLED(int num, bool state, int brightness) {
@@ -138,54 +140,84 @@ void handleControl() {
 void handleScan() {
   Serial.println("📥 GET /scan");
   int n = WiFi.scanNetworks();
-  
   String json = "{\"networks\":[";
   for (int i = 0; i < n; i++) {
     if (i > 0) json += ",";
-    json += "{\"ssid\":\"" + WiFi.SSID(i) + "\",";
+    json += "{";
+    json += "\"ssid\":\"" + WiFi.SSID(i) + "\",";
     json += "\"rssi\":" + String(WiFi.RSSI(i)) + ",";
-    json += "\"encryption\":\"";
-    switch (WiFi.encryptionType(i)) {
-      case WIFI_AUTH_OPEN: json += "Open"; break;
-      case WIFI_AUTH_WPA2_PSK: json += "WPA2"; break;
-      default: json += "Protected";
+    wifi_auth_mode_t authMode = WiFi.encryptionType(i);
+    String encType = "Unknown";
+    bool isEnterprise = false;
+    switch (authMode) {
+      case WIFI_AUTH_OPEN: encType = "Open"; break;
+      case WIFI_AUTH_WEP: encType = "WEP"; break;
+      case WIFI_AUTH_WPA_PSK: encType = "WPA-PSK"; break;
+      case WIFI_AUTH_WPA2_PSK: encType = "WPA2-PSK"; break;
+      case WIFI_AUTH_WPA_WPA2_PSK: encType = "WPA/WPA2-PSK"; break;
+      case WIFI_AUTH_WPA2_ENTERPRISE: encType = "WPA2-Enterprise"; isEnterprise = true; break;
+      case WIFI_AUTH_WPA3_PSK: encType = "WPA3-PSK"; break;
+      default: encType = "Unknown"; break;
     }
-    json += "\"}";
+    json += "\"encryption\":\"" + encType + "\",";
+    json += "\"is_enterprise\":" + String(isEnterprise ? "true" : "false");
+    json += "}";
   }
   json += "]}";
-  
   server.send(200, "application/json", json);
-  Serial.printf("✅ Found %d networks\n", n);
 }
 
 void handleConnect() {
     Serial.println("\n======== WIFI CONNECT ========");
-    
     wifi_ssid = server.arg("ssid");
     wifi_password = server.arg("pass");
-    
+    String username = server.arg("user");
     Serial.println("SSID: " + wifi_ssid);
-    
+    Serial.println("Pass: " + String(wifi_password.length()) + " chars");
+    if (!username.isEmpty()) {
+        Serial.println("Username: " + username + " (WPA2-Enterprise)");
+    } else {
+        Serial.println("Username: (empty - WPA2-PSK)");
+    }
     if (wifi_ssid.isEmpty()) {
         server.send(400, "text/plain", "SSID required");
         return;
     }
-    
     WIFI_SSID = wifi_ssid;
     WIFI_PASS = wifi_password;
-    
+    WIFI_USERNAME = username;
     server.send(200, "text/plain", "Connecting to: " + wifi_ssid);
     delay(100);
-    
-    // ✅ TẮT AP SAU KHI LƯU CẤU HÌNH
     if (isAPMode) {
         Serial.println("🛑 Disabling AP mode after WiFi config...");
         WiFi.softAPdisconnect(true);
         isAPMode = false;
     }
-    
-    Save_info_File(WIFI_SSID, WIFI_PASS, "", "", "");
+    DynamicJsonDocument doc(4096);
+    if (LittleFS.exists("/info.dat")) {
+        File oldFile = LittleFS.open("/info.dat", "r");
+        if (oldFile) {
+            deserializeJson(doc, oldFile);
+            oldFile.close();
+            Serial.println("📄 Loaded existing /info.dat (keeping MQTT config)");
+        }
+    }
+    doc["WIFI_SSID"] = WIFI_SSID;
+    doc["WIFI_PASS"] = WIFI_PASS;
+    doc["WIFI_USERNAME"] = WIFI_USERNAME;
+    File file = LittleFS.open("/info.dat", "w");
+    if (file) {
+        serializeJson(doc, file);
+        file.close();
+        Serial.println("✅ WiFi config saved to /info.dat");
+    } else {
+        Serial.println("❌ Failed to save /info.dat!");
+    }
+    Serial.println("--- JSON content ---");
+    serializeJsonPretty(doc, Serial);
+    Serial.println("\n--------------------");
     Serial.println("==============================\n");
+    startSTA(true);
 }
 
 void handleAPConfig() {

@@ -97,19 +97,19 @@ void setup()
   xTaskCreatePinnedToCore(task_mqtt, "MQTT", 4096, NULL, 1, NULL, 1);
 }
 
-void loop()
-{
-  // if (check_info_File(1))
-  // {
-  //   if (!Wifi_reconnect())
-  //   {
-  //     Webserver_stop();
-  //   }
-  //   else
-  //   {
-  //     CORE_IOT_reconnect();
-  //   }
-  // }
-  // Webserver_reconnect();
-  
+void loop() {
+  static unsigned long lastCheck = 0;
+  unsigned long now = millis();
+  if (now - lastCheck > 10000) {
+    lastCheck = now;
+    if (check_info_File(1)) {
+      if (!Wifi_reconnect()) {
+        Webserver_stop();  // Stop port 8080 if WiFi lost
+      } else {
+        CORE_IOT_reconnect();
+      }
+    }
+  }
+  Webserver_reconnect();
+  vTaskDelay(100 / portTICK_PERIOD_MS);  // ✅ prevent watchdog reset
 }

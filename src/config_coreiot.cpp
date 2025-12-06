@@ -4,11 +4,12 @@
 
 // ✅ Biến toàn cục
 //{clientId:"ESP32_S3",userName:"KietNguyen",password:"87654321"}
-String coreiot_server    = "app.coreiot.io";
-int    coreiot_port      = 1883;
-String coreiot_client_id = "ESP32_S3";
-String coreiot_username  = "KietNguyen";
-String coreiot_password  = "87654321";
+// ✅ Biến toàn cục
+String coreiot_server    = "";
+int    coreiot_port      = 0;
+String coreiot_client_id = "";
+String coreiot_username  = "";
+String coreiot_password  = "";
 
 bool loadCoreIOTConfig() {
     if (!LittleFS.exists("/coreiot.json")) {
@@ -44,6 +45,16 @@ bool loadCoreIOTConfig() {
     Serial.println("   Client ID: " + coreiot_client_id);
     Serial.println("   Username: " + coreiot_username);
     Serial.println("   Password: " + String(coreiot_password.length() > 0 ? "***" : "(empty)"));
+
+    ///xoá client_id mặc định cũ nếu có 
+    if (!coreiot_client_id.isEmpty()) {
+        String defaultClientId = "ESP32_" + String((uint32_t)ESP.getEfuseMac(), HEX);
+        if (coreiot_client_id.equalsIgnoreCase(defaultClientId)) {
+            Serial.println("⚠️ Clearing legacy default Client ID");
+            coreiot_client_id = "";
+            saveCoreIOTConfig();
+        }
+    }
 
     return true;
 }

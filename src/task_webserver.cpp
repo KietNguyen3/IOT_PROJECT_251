@@ -144,7 +144,7 @@ void connnectWSV() {
             doc["error"] = false;
             doc["temperature"] = th.temperature;
             doc["humidity"] = th.humidity;
-            doc["rain"] = water;
+            doc["rain"] = (water*100)/4095;
         } else {
             // No data available in queue
             doc["error"] = true;
