@@ -1,47 +1,27 @@
-# Espressif 32: development platform for [PlatformIO](https://platformio.org)
+# IoT Embedded System on ESP32-S3
 
-[![Build Status](https://github.com/platformio/platform-espressif32/workflows/Examples/badge.svg)](https://github.com/platformio/platform-espressif32/actions)
+## Overview
+This project implements a real-time IoT embedded system using FreeRTOS on ESP32-S3.
+The system demonstrates task synchronization with semaphores and sensor-driven control logic.
 
-ESP32 is a series of low-cost, low-power system on a chip microcontrollers with integrated Wi-Fi and Bluetooth. ESP32 integrates an antenna switch, RF balun, power amplifier, low-noise receive amplifier, filters, and power management modules.
+## Features
+- FreeRTOS-based task scheduling and semaphore synchronization
+- Temperature and humidity monitoring
+- LED, NeoPixel, and LCD control based on sensor data
+- No global variables (RTOS synchronization-based design)
 
-* [Home](https://registry.platformio.org/platforms/platformio/espressif32) (home page in the PlatformIO Registry)
-* [Documentation](https://docs.platformio.org/page/platforms/espressif32.html) (advanced usage, packages, boards, frameworks, etc.)
+## My Role
+- Embedded firmware development
+- RTOS task design and synchronization
+- Sensor integration and device control logic
 
-# Usage
+## Technologies
+- ESP32-S3
+- FreeRTOS
+- C/C++
+- PlatformIO
 
-1. [Install PlatformIO](https://platformio.org)
-2. Create PlatformIO project and configure a platform option in [platformio.ini](https://docs.platformio.org/page/projectconf.html) file:
-
-## Stable version
-
-See `platform` [documentation](https://docs.platformio.org/en/latest/projectconf/sections/env/options/platform/platform.html#projectconf-env-platform) for details.
-
-```ini
-[env:stable]
-; recommended to pin to a version, see https://github.com/platformio/platform-espressif32/releases
-; platform = espressif32 @ ^6.0.1
-platform = espressif32
-board = yolo_uno
-framework = arduino
-monitor_speed = 115200
-
-build_flags =
-    -D ARDUINO_USB_MODE=1
-    -D ARDUINO_USB_CDC_ON_BOOT=1
-
-## Development version
-
-```ini
-[env:development]
-platform = https://github.com/platformio/platform-espressif32.git
-board = yolo_uno
-framework = arduino
-monitor_speed = 115200
-build_flags =
-    -D ARDUINO_USB_MODE=1
-    -D ARDUINO_USB_CDC_ON_BOOT=1
-
-    
-# Configuration
-
-Please navigate to [documentation](https://docs.platformio.org/page/platforms/espressif32.html).
+## How to Run
+1. Open the project in PlatformIO
+2. Build and upload to ESP32-S3
+3. Monitor output via serial console
